@@ -1,0 +1,145 @@
+NOTICE   <2011, Alexander Bresk (abresk@cip-labs.net), www.cip-labs.net>
+@about: ipsum - PHP formular parser
+@link: http://www.cip-labs.net/projects/ipsum/
+
+class Morphem
+**************
+
+A morphem is the atomic part of every language. In our case, a morpheme 
+represents the tokens of a formal language, for instance: 
+
+
+(, ), +, -, *, /, sin, cos, tan, sqrt, exp, ln, log10, -912, 12
+
+
+
+The morphem class represents a morphem, after the lexer has detected it. 
+
+
+class Lexer
+***********
+
+The lexer has the job to detect morphemes in the formula. With some simple 
+rules, the lexer detects every morphem from the left to the right:
+
+   * FVAL - function value like (sin, cos, ln)
+   * DVAL - double value like (1,3,5,7,11)
+   * CVAL - character value like (+,(,),-)
+   * NOVAL - no value, tokens that are not defined
+   * FINISHED - the lexer finished with '\0' in the string
+
+This class returns the current morphem to the parser. The parser uses this 
+morphem, to calculate the result of your formula with the rules of the grammar. 
+
+
+class Parser
+************
+
+An important part of a good working parser is a good grammar. In this case, I 
+choose a case-sensitive grammar. A grammar is a formal construct, to define, 
+how a language is structured. In this case, the language represents all valid 
+formulas. The following grammar was used in the code:
+
+E -> T | T + E | T - E
+T -> F | F * T | F / T
+F -> (E) | N | -N | sqrt(E) | sin(E) | cos(E) | tan(E) | exp(E) | ln(E) | log10(E)
+N -> I | I .D 
+I -> 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 1I | 2I | 3I | 4I | 5I | 6I | 7I | 8I | 9I
+D -> 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0D | 1D | 2D | 3D | 4D | 5D | 6D | 7D | 8D | 9D
+
+This grammar is realized in the parser class. The customized functions, that 
+you can integrate into the parser comes in at F. Here are laying your functions. 
+
+HowTo work with
+****************
+
+First example
+'''''''''''''
+
+<code>
+    require 'Parser.clas.php';
+
+    $parser = new Parser('sin(4)+cos(4)');
+    $result = $parser->run();
+    echo 'result is: ' , $result , PHP_EOL;
+   
+     //outputs
+     result is: -1.4104461161715
+
+</code>
+
+
+As you can see in the example above, it is really easy to use the parser. 
+You just have to type in the formula that you want to parse and nothing more. 
+
+
+Extending functionality
+***********************
+
+Sure, I built in some functions, that are important for mathematical 
+calculations, but maybe you want some more functions, to serve your needs. 
+That is no problem:
+
+<code>
+
+require_once 'Parser.class.php';
+
+function divide2($x){
+    return $x = $x / 2;
+}
+
+function plusRandom($x){
+    return $x + rand(0,10);
+}
+
+    $parser = new Parser('div2(sin(pr(1)))');
+    $parser->addFunction('div2', 'divide2');
+    $parser->addFunction('pr', 'plusRandom');
+    echo $parser->run();
+
+
+//outputs the sinus from a number from a random number in the scope of 1-11 divided by 2
+
+
+</code>
+
+Note: Every function must have one argument (not more and not less).
+*****
+
+
+Symbol table
+************
+
+The symbol table includes all functions that you had added or where built-in. 
+I kept this structure static, so that a new parser object has access to it. 
+Furthermore the parser needs this structure static, because in some cases we 
+are starting a new parser recursively. The table is an array of the lexer 
+class and you can access it with:
+
+Lexer::$_userFunctions[$name_in_formula] = $real_function_name;
+
+
+Using the calculator
+
+May you want to calculate a series of results for one formula, to draw a graph 
+in a coordinate system or to simply calculate a series of results from a 
+formula with a variable. Then you should use the Calculator. 
+
+<code>
+
+ $calc = new Calculator();
+ $calc->options('{x}', 0, 10, 0.5);
+ $calc->addFunction('div2','divide2');
+ print_r($calc->calculate('sin({x})+cos({x})');
+
+
+</code>
+
+The calculator runs the formula with the variable {x} starts with 0 and runs 
+up to 10 with the step rate of 0.5. That means, the calculator runs 
+for {x} = 0, {x} = 0.5, {x} = 1.0, {x} = 1.5 …. {x} = 10.0. The keys of the 
+result array are the current step and the values are the result of the 
+calculation.
+
+
+EOF
