@@ -109,7 +109,7 @@ class Lexer{
     $this->eatWhitespaces();
     
     //source terminated -> finished
-    if($this->_source[$this->_token] == '\0'){
+    if(!isset($this->_source[$this->_token]) || $this->_source[$this->_token] == '\0'){
         $this->_morphem->setCode(FINISHED);
     
     //go ahead
